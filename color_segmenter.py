@@ -35,10 +35,7 @@ def main():
                          'R': {'max': 255, 'min': 229}}}
 
     # setup video capture for webcam
-    # capture = cv2.VideoCapture(0)
-
-    # setup video capture for video file
-    capture = cv2.VideoCapture('/home/guilherme/PSR_Repository/PSR/A6/Ex3/test2.mp4')
+    capture = cv2.VideoCapture(0)
 
     # configure opencv window
     window_name = 'Color Segmentor'
