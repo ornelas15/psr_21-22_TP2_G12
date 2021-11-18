@@ -35,10 +35,10 @@ def main():
                          'R': {'max': 255, 'min': 229}}}
 
     # setup video capture for webcam
-    capture = cv2.VideoCapture(0)
+    # capture = cv2.VideoCapture(0)
 
     # setup video capture for video file
-    # capture = cv2.VideoCapture('/home/guilherme/PSR_Repository/PSR/A6/Ex3/test2.mp4')
+    capture = cv2.VideoCapture('/home/guilherme/PSR_Repository/PSR/A6/Ex3/test2.mp4')
 
     # configure opencv window
     window_name = 'Color Segmentor'
@@ -63,21 +63,13 @@ def main():
             print('Video is over!')
             break  # video is over
 
-        # Get Trackbar Position
-        MinB = cv2.getTrackbarPos('MinB', window_name)
-        MaxB = cv2.getTrackbarPos('MaxB', window_name)
-        MinG = cv2.getTrackbarPos('MinG', window_name)
-        MaxG = cv2.getTrackbarPos('MaxG', window_name)
-        MinR = cv2.getTrackbarPos('MinR', window_name)
-        MaxR = cv2.getTrackbarPos('MaxR', window_name)
-
-        # Update corresponding value in ranges dict
-        ranges['limits']['B']['min'] = MinB
-        ranges['limits']['B']['max'] = MaxB
-        ranges['limits']['G']['min'] = MinG
-        ranges['limits']['G']['max'] = MaxG
-        ranges['limits']['R']['min'] = MinR
-        ranges['limits']['R']['max'] = MaxR
+        # Get Trackbar Position and update corresponding value in ranges dict
+        ranges['limits']['B']['min'] = cv2.getTrackbarPos('MinB', window_name)
+        ranges['limits']['B']['max'] = cv2.getTrackbarPos('MaxB', window_name)
+        ranges['limits']['G']['min'] = cv2.getTrackbarPos('MinG', window_name)
+        ranges['limits']['G']['max'] = cv2.getTrackbarPos('MaxG', window_name)
+        ranges['limits']['R']['min'] = cv2.getTrackbarPos('MinR', window_name)
+        ranges['limits']['R']['max'] = cv2.getTrackbarPos('MaxR', window_name)
 
         # Processing
         mins = np.array([ranges['limits']['B']['min'], ranges['limits']['G']['min'], ranges['limits']['R']['min']])
