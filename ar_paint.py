@@ -12,7 +12,7 @@ painting = np.ones((550, 700, 3)) * 255  # start with everything white
 def load_coloring_image():
     cImage = cv2.imread("./images/ovni.png", cv2.IMREAD_GRAYSCALE)
     
-    ret, thresh = cv2.threshold(cImage,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    ret, thresh = cv2.threshold(cImage,128,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     
     # use connectedComponentWithStats to find the white areas
     connectivity = 4
@@ -27,7 +27,7 @@ def load_coloring_image():
     colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
     labelColors = dict()
     
-    height, width = cImage.shape
+    height, width = thresh.shape
     for i in range(height):
         for j in range(width):
             if labels[i][j] not in labelColors.keys():
@@ -40,11 +40,11 @@ def load_coloring_image():
     fontScale = (width * height) / (800 * 800)
     for i in range(0, len(centroids)):
         if labelColors[i] != (0,0,0):
-            cv2.putText(cImage,str(i), (int(centroids[i][0]-fontScale*15), int(centroids[i][1]+fontScale*15)), cv2.FONT_HERSHEY_SIMPLEX, fontScale, (0,0,0), 1)
+            cv2.putText(thresh,str(i), (int(centroids[i][0]-fontScale*20), int(centroids[i][1]+fontScale*15)), cv2.FONT_HERSHEY_SIMPLEX, fontScale, (0,0,0), 1)
 
-    cImage = cv2.bitwise_not(cImage)
+    thresh = cv2.bitwise_not(thresh)
     
-    return cv2.cvtColor(cImage,cv2.COLOR_GRAY2RGB), labelColors, labels
+    return cv2.cvtColor(thresh,cv2.COLOR_GRAY2RGB), labelColors, labels
 
 
 # deal with mouse events
