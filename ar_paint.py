@@ -19,14 +19,25 @@ color = (0, 0, 255)  # BGR, Red by default
 
 
 # obtain a numbered inverted image, labels and label-color matches
-def load_coloring_image():
+def load_coloring_image(height, width):
     cImage = cv2.imread("./images/ovni.png", cv2.IMREAD_GRAYSCALE)
+    
+    cImage = cv2.resize(cImage,   (int(cImage.shape[1] * height/cImage.shape[0]), height))
 
-    ret, thresh = cv2.threshold(cImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    ret, thresh = cv2.threshold(cImage, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    #height, width = thresh.shape
+
+    cImage = np.zeros((height, width)).astype(np.uint8)
+    
+    print(width)
+    print(thresh.shape)
+    
+    cImage[:, int(width/2 - thresh.shape[1]/2):int(width/2 + thresh.shape[1]/2)] = thresh
 
     # use connectedComponentWithStats to find the white areas
     connectivity = 4
-    output = cv2.connectedComponentsWithStats(thresh, connectivity, cv2.CV_32S)
+    output = cv2.connectedComponentsWithStats(cImage, connectivity, cv2.CV_32S)
 
     num_labels = output[0]  # number of labels / areas
     labels = output[1]  # label matrix
@@ -37,11 +48,11 @@ def load_coloring_image():
     colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
     labelColors = dict()
 
-    height, width = cImage.shape
+    
     for i in range(height):
         for j in range(width):
             if labels[i][j] not in labelColors.keys():
-                if thresh[i][j] == 0:
+                if cImage[i][j] == 0:
                     labelColors[labels[i][j]] = (0, 0, 0)
                 else:
                     labelColors[labels[i][j]] = colors[labels[i][j] % 3]
@@ -137,17 +148,15 @@ def main():
     # setup video capture for webcam
     capture = cv2.VideoCapture(0)
 
+    _, image_capture = capture.read()
+    height, width, _ = image_capture.shape
+    painting = np.ones((height, width, 3)) * 255
+    cv2.imshow(window1_name, painting)
+    
     # coloring image mode
     if args.coloring_image_mode:
-        cImage, labelColors, labels = load_coloring_image()
-        height, width, _ = cImage.shape
-        painting = np.ones((height, width, 3)) * 255
-        cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
-    else:
-        _, image_capture = capture.read()
-        height, width, _ = image_capture.shape
-        painting = np.ones((height, width, 3)) * 255
-        cv2.imshow(window1_name, painting)
+        cImage, labelColors, labels = load_coloring_image(height, width)
+        cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))        
 
     cv2.setMouseCallback(window1_name, mouse_paint)
 
@@ -164,66 +173,67 @@ def main():
         if args.coloring_image_mode:
             cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
         else:
-            # get an image from the camera
-            _, image_capture = capture.read()
-            image_capture = cv2.flip(image_capture, 1) # Flip image
-
             # Show White Board same size as capture
             cv2.imshow(window1_name, painting)
+            
+        # get an image from the camera
+        _, image_capture = capture.read()
+        image_capture = cv2.flip(image_capture, 1) # Flip image
 
-            # Processing Mask
-            mins = np.array([ranges['limits']['B']['min'], ranges['limits']['G']['min'], ranges['limits']['R']['min']])
-            maxs = np.array([ranges['limits']['B']['max'], ranges['limits']['G']['max'], ranges['limits']['R']['max']])
-            mask = cv2.inRange(image_capture, mins, maxs)
-            mask = mask.astype(bool)  # conversion from numpy uint8 to bool
-            image_processed = copy.deepcopy(image_capture)
-            image_processed[np.logical_not(mask)] = 0
+        # Processing Mask
+        mins = np.array([ranges['limits']['B']['min'], ranges['limits']['G']['min'], ranges['limits']['R']['min']])
+        maxs = np.array([ranges['limits']['B']['max'], ranges['limits']['G']['max'], ranges['limits']['R']['max']])
+        mask = cv2.inRange(image_capture, mins, maxs)
+        mask = mask.astype(bool)  # conversion from numpy uint8 to bool
+        image_processed = copy.deepcopy(image_capture)
+        image_processed[np.logical_not(mask)] = 0
 
-            # Show Mask Window
-            cv2.imshow(window3_name, image_processed)
+        # Show Mask Window
+        cv2.imshow(window3_name, image_processed)
 
-            # Get Object
-            image_grey = cv2.cvtColor(image_processed, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(image_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
+        # Get Object
+        image_grey = cv2.cvtColor(image_processed, cv2.COLOR_BGR2GRAY)
+        _, thresh = cv2.threshold(image_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
 
-            # Get Object Max Area Centroid
-            max_area = 0
-            for i in range(num_labels):
-                if i != 0 and max_area < stats[i, cv2.CC_STAT_AREA]:
-                    max_area = stats[i, cv2.CC_STAT_AREA]
-                    max_area_Label = i
+        # Get Object Max Area Centroid
+        max_area = 0
+        max_area_Label = 0
+        for i in range(num_labels):
+            if i != 0 and max_area < stats[i, cv2.CC_STAT_AREA]:
+                max_area = stats[i, cv2.CC_STAT_AREA]
+                max_area_Label = i
 
-            mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
-            mask2 = mask2.astype(bool)
-            image_capture[mask2] = (0, 255, 0)
+        mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
+        mask2 = mask2.astype(bool)
+        image_capture[mask2] = (0, 255, 0)
 
-            # Draw Line on White Board
-            x = int(centroids[max_area_Label, 0])
-            y = int(centroids[max_area_Label, 1])
-            if x_last != None and y_last != None:
-                if args.use_shake_prevention:
-                    # Distancia = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
-                    dist = ((x - x_last)**2 + (y - y_last)**2)**(1/2)
-                    if dist < 50:
-                        cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                    else:
-                        cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
-                else:
+        # Draw Line on White Board
+        x = int(centroids[max_area_Label, 0])
+        y = int(centroids[max_area_Label, 1])
+        if x_last != None and y_last != None:
+            if args.use_shake_prevention:
+                # Distancia = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
+                dist = ((x - x_last)**2 + (y - y_last)**2)**(1/2)
+                if dist < 50:
                     cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                else:
+                    cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
+            else:
+                cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
 
-                # Draw in Video Capture Test
-                cv2.line(line, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                print(line.dtype)
-                line = line.astype(np.uint8)
-                print(line.dtype)
-                # exit(0)
-                image_capture = cv2.add(image_capture, line)
-            x_last = x
-            y_last = y
+            # Draw in Video Capture Test
+            cv2.line(line, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+            print(line.dtype)
+            line = line.astype(np.uint8)
+            print(line.dtype)
+            # exit(0)
+            image_capture = cv2.add(image_capture, line)
+        x_last = x
+        y_last = y
 
-            # Show Capture Window
-            cv2.imshow(window2_name, image_capture)
+        # Show Capture Window
+        cv2.imshow(window2_name, image_capture)
 
         # deal with keyboard events
         key = cv2.waitKey(20)
