@@ -9,6 +9,8 @@ import numpy as np
 import cv2
 import argparse
 import copy
+from math import sqrt, pow
+from colorama import Fore,Style
 
 # GLOBAL VARIABLES
 # -----------------------------------------------------
@@ -68,6 +70,34 @@ def mouse_paint(event, x, y, flags, params):
 
     elif event == cv2.EVENT_LBUTTONUP:
         clicking = False
+
+#Funcionalidade Avançada 3
+def rectangle(event, x, y, flags, params):
+    global painting, color, clicking, x1, y1
+    if event == cv2.EVENT_LBUTTONDOWN:
+        clicking = True
+        x1 = x   
+        y1 = y
+    elif event == cv2.EVENT_MOUSEMOVE:
+        clicking = True
+        #cv2.rectangle(painting, (x1, y1), (x, y), color, 3)
+    elif event == cv2.EVENT_LBUTTONUP:
+            clicking = False
+            cv2.rectangle(painting, (x1, y1), (x, y), color, 3)
+    
+
+def circle(event, x, y, flags, params):
+    global painting, color, clicking, x1, y1, radius
+    if event == cv2.EVENT_LBUTTONDOWN:
+        clicking = True
+        x1 = x   
+        y1 = y
+    elif event == cv2.EVENT_MOUSEMOVE:
+        clicking = True
+        #cv2.circle(painting, (x1, y1), radius, color, 3)
+    elif event == cv2.EVENT_LBUTTONUP:
+            clicking = False
+            cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, 3)
 
 
 def main():
@@ -199,7 +229,7 @@ def main():
         key = cv2.waitKey(20)
 
         if key != -1:
-            print("Tecla pressionada: " + str(key))
+            print("Pressed key: " + chr(key))
             if key == ord('R') or key == ord('r'):
                 color = (0, 0, 255)
                 print('Red color selected')
@@ -212,17 +242,21 @@ def main():
             elif key == ord('W') or key == ord('w'):
                 name = str(ctime(time()))
                 cv2.imwrite(name + '.jpg', painting)
-            elif key == ord('C') or key == ord('c'):
+            elif key == ord('E') or key == ord('e'):
                 _, image_capture = capture.read()
                 height, width, _ = image_capture.shape
                 painting = np.ones((height, width, 3)) * 255
                 cv2.imshow(window1_name, painting)
             elif key == ord('+'):
                 thickness += 1
-                print('Incrise thickness')
+                print('Increase thickness')
             elif key == ord('-') and thickness > 0:
                 thickness -= 1
-                print('Decrise thickness')
+                print('Decrease thickness')
+            elif key == ord('C') or key == ord('c'):
+                cv2.setMouseCallback(window1_name, circle)
+            elif key == ord('R') or key == ord('r'):
+                cv2.setMouseCallback(window1_name,rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
