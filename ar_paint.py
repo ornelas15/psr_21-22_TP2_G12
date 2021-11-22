@@ -43,15 +43,18 @@ def load_coloring_image(height, width):
     labels = output[1]  # label matrix
     stats = output[2]  # statistics
     centroids = output[3]  # centroid matrix
+    print(stats)
+    print(centroids)
+    print(labels)
 
     # associate a label with a color
     colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
-    labelColors = dict()
+    labelColors = [None] * num_labels
 
     
     for i in range(height):
         for j in range(width):
-            if labels[i][j] not in labelColors.keys():
+            if not labelColors[labels[i][j]]:
                 if cImage[i][j] == 0:
                     labelColors[labels[i][j]] = (0, 0, 0)
                 else:
@@ -143,6 +146,9 @@ def main():
     window1_name = "Augmented Reality Paint"
     window2_name = "Video Capture"
     window3_name = "Mask"
+    cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow(window2_name, cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow(window3_name, cv2.WINDOW_KEEPRATIO)
     print(window1_name)
 
     # setup video capture for webcam
@@ -155,7 +161,7 @@ def main():
     
     # coloring image mode
     if args.coloring_image_mode:
-        cImage, labelColors, labels = load_coloring_image(height, width)
+        cImage, labelColors, labelMatrix = load_coloring_image(height, width)
         cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))        
 
     cv2.setMouseCallback(window1_name, mouse_paint)
@@ -234,6 +240,10 @@ def main():
 
         # Show Capture Window
         cv2.imshow(window2_name, image_capture)
+        
+        cv2.resizeWindow(window1_name, (width//3, height//3))
+        cv2.resizeWindow(window2_name, (width//3, height//3))
+        cv2.resizeWindow(window3_name, (width//3, height//3))
 
         # deal with keyboard events
         key = cv2.waitKey(20)
@@ -265,7 +275,7 @@ def main():
                 print('Decrease thickness')
             elif key == ord('C') or key == ord('c'):
                 cv2.setMouseCallback(window1_name, circle)
-            elif key == ord('R') or key == ord('r'):
+            elif key == ord('S') or key == ord('s'):
                 cv2.setMouseCallback(window1_name,rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
@@ -273,10 +283,12 @@ def main():
                     misses = 0
                     for i in range(height):
                         for j in range(width):
-                            rightColor = labelColors[labels[i][j]]
-                            if np.array_equal(painting[i][j], rightColor):
+                            rightColor = labelColors[labelMatrix[i,j]]
+                            if rightColor == (0, 0, 0):
+                                pass
+                            elif np.array_equal(painting[i,j], rightColor):
                                 hits += 1
-                            elif rightColor != (0, 0, 0):
+                            else:
                                 misses += 1
 
                     print(hits)
