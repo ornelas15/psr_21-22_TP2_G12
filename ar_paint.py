@@ -19,7 +19,7 @@ color = (0, 0, 255)  # BGR, Red by default
 thickness = 2
 
 
-# obtain a numbered inverted image, labels and label-color matches
+# Obtain a numbered inverted image, labels and label-color matches
 def load_coloring_image(height, width):
     cImage = cv2.imread("./images/ovni.png", cv2.IMREAD_GRAYSCALE)
     
@@ -36,7 +36,7 @@ def load_coloring_image(height, width):
     
     cImage[:, int(width/2 - thresh.shape[1]/2):int(width/2 + thresh.shape[1]/2)] = thresh
 
-    # use connectedComponentWithStats to find the white areas
+    # Use connectedComponentWithStats to find the white areas
     connectivity = 4
     output = cv2.connectedComponentsWithStats(cImage, connectivity, cv2.CV_32S)
 
@@ -48,7 +48,7 @@ def load_coloring_image(height, width):
     print(centroids)
     print(labels)
 
-    # associate a label with a color
+    # Associate a label with a color
     colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
     labelColors = [None] * num_labels
 
@@ -61,7 +61,7 @@ def load_coloring_image(height, width):
                 else:
                     labelColors[labels[i][j]] = colors[labels[i][j] % 3]
 
-    # write the numbers on the image
+    # Write the numbers on the image
     fontScale = (width * height) / (800 * 800)
     for i in range(0, len(centroids)):
         if labelColors[i] != (0, 0, 0):
@@ -73,7 +73,7 @@ def load_coloring_image(height, width):
     return cv2.cvtColor(cImage, cv2.COLOR_GRAY2RGB), labelColors, labels
 
 
-# deal with mouse events
+# Deal with mouse events
 def mouse_paint(event, x, y, flags, params):
     global clicking, painting
 
@@ -86,7 +86,8 @@ def mouse_paint(event, x, y, flags, params):
     elif event == cv2.EVENT_LBUTTONUP:
         clicking = False
 
-#Funcionalidade Avançada 3
+# Advanced functionality 3
+# Draw Rectangle 
 def rectangle(event, x, y, flags, params):
     global painting, color, clicking, x1, y1, x2, y2, thickness
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -105,6 +106,7 @@ def rectangle(event, x, y, flags, params):
         clicking = False
         cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
 
+# Draw Circle
 def circle(event, x, y, flags, params):
     global painting, color, clicking, x1, y1, x2, y2, thickness
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -152,7 +154,7 @@ def main():
         ranges = json.load(f)
     pprint(ranges)
 
-    # configure opencv windows
+    # Configure opencv windows
     window1_name = "Augmented Reality Paint"
     window2_name = "Video Capture"
     window3_name = "Mask"
@@ -161,7 +163,7 @@ def main():
     cv2.namedWindow(window3_name, cv2.WINDOW_KEEPRATIO)
     print(window1_name)
 
-    # setup video capture for webcam
+    # Setup video capture for webcam
     capture = cv2.VideoCapture(0)
 
     _, image_capture = capture.read()
@@ -169,7 +171,7 @@ def main():
     painting = np.ones((height, width, 3)) * 255
     cv2.imshow(window1_name, painting)
     
-    # coloring image mode
+    # Coloring image mode
     if args.coloring_image_mode:
         cImage, labelColors, labelMatrix = load_coloring_image(height, width)
         cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))        
@@ -192,7 +194,7 @@ def main():
             # Show White Board same size as capture
             cv2.imshow(window1_name, painting)
             
-        # get an image from the camera
+        # Get an image from the camera
         _, image_capture = capture.read()
         image_capture = cv2.flip(image_capture, 1) # Flip image
 
@@ -229,7 +231,7 @@ def main():
         y = int(centroids[max_area_Label, 1])
         if x_last != None and y_last != None:
             if args.use_shake_prevention:
-                # Distancia = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
+                # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
                 dist = ((x - x_last)**2 + (y - y_last)**2)**(1/2)
                 if dist < 50:
                     cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
@@ -255,7 +257,7 @@ def main():
         cv2.resizeWindow(window2_name, (width//3, height//3))
         cv2.resizeWindow(window3_name, (width//3, height//3))
 
-        # deal with keyboard events
+        # Deal with keyboard events
         key = cv2.waitKey(20)
 
         if key != -1:
