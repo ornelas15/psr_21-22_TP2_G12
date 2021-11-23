@@ -294,14 +294,12 @@ def main():
                     copy = painting.copy()
                     cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
                     cv2.imshow(window1_name,copy)
-            elif key == ord('R') or key == ord('r'):
+            elif key == ord('S') or key == ord('s'):
                 cv2.setMouseCallback(window1_name,rectangle)
                 if not cv2.EVENT_MOUSEMOVE:
                     copy = painting.copy()
                     cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
                     cv2.imshow(window1_name,copy)
-            elif key == ord('S') or key == ord('s'):
-                cv2.setMouseCallback(window1_name,rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
