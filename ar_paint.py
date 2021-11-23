@@ -180,7 +180,7 @@ def main():
 
     x_last = None
     y_last = None
-    thickness = 2
+    thickness = 2   
 
     line = np.zeros((height, width, 3))
 
@@ -188,6 +188,7 @@ def main():
     # Execution
     # -----------------------------------------------------
     while True:
+
         if args.coloring_image_mode:
             cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
         else:
@@ -230,21 +231,30 @@ def main():
         x = int(centroids[max_area_Label, 0])
         y = int(centroids[max_area_Label, 1])
         if x_last != None and y_last != None:
-            if args.use_shake_prevention:
-                # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
-                dist = ((x - x_last)**2 + (y - y_last)**2)**(1/2)
-                if dist < 50:
-                    cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+            if thickness > 0:
+                if args.use_shake_prevention:
+                    # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
+                    dist = ((x - x_last)**2 + (y - y_last)**2)**(1/2)
+                    if dist < 50:
+                        cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                    else:
+                        cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
                 else:
-                    cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
+                    cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
             else:
-                cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                print('The thickness value has reached is limit, try to increase it')
+                
 
+            
+            if thickness > 0:
             # Draw in Video Capture Test
-            cv2.line(line, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-            line = line.astype(np.uint8)
+                cv2.line(line, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                line = line.astype(np.uint8)
             # exit(0)
-            image_capture = cv2.add(image_capture, line)
+                image_capture = cv2.add(image_capture, line)
+            else:
+                 print('The thickness value has reached is limit, try to increase it')
+                 
         x_last = x
         y_last = y
 
@@ -278,11 +288,11 @@ def main():
                 painting = np.ones((height, width, 3)) * 255
                 cv2.imshow(window1_name, painting)
             elif key == ord('+'):
-                thickness += 1
-                print('Increase thickness')
+                    thickness += 1
+                    print('Increase thickness')
             elif key == ord('-') and thickness > 0:
-                thickness -= 1
-                print('Decrease thickness')
+                    thickness -= 1
+                    print('Decrease thickness')
             elif key == ord('C') or key == ord('c'):
                 cv2.setMouseCallback(window1_name, circle)
                 if not cv2.EVENT_MOUSEMOVE:
