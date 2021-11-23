@@ -10,7 +10,7 @@ import cv2
 import argparse
 from copy import deepcopy
 from math import sqrt, pow
-from colorama import Fore,Style
+from colorama import Fore, Style
 
 # GLOBAL VARIABLES
 # -----------------------------------------------------
@@ -23,19 +23,19 @@ x1, y1, x2, y2 = 0, 0, 0, 0
 # Obtain a numbered inverted image, labels and label-color matches
 def load_coloring_image(height, width):
     cImage = cv2.imread("./images/ovni.png", cv2.IMREAD_GRAYSCALE)
-    
-    cImage = cv2.resize(cImage,   (int(cImage.shape[1] * height/cImage.shape[0]), height))
+
+    cImage = cv2.resize(cImage, (int(cImage.shape[1] * height / cImage.shape[0]), height))
 
     ret, thresh = cv2.threshold(cImage, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    #height, width = thresh.shape
+
+    # height, width = thresh.shape
 
     cImage = np.zeros((height, width)).astype(np.uint8)
-    
+
     print(width)
     print(thresh.shape)
-    
-    cImage[:, int(width/2 - thresh.shape[1]/2):int(width/2 + thresh.shape[1]/2)] = thresh
+
+    cImage[:, int(width / 2 - thresh.shape[1] / 2):int(width / 2 + thresh.shape[1] / 2)] = thresh
 
     # Use connectedComponentWithStats to find the white areas
     connectivity = 4
@@ -53,7 +53,6 @@ def load_coloring_image(height, width):
     colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
     labelColors = [None] * num_labels
 
-    
     for i in range(height):
         for j in range(width):
             if not labelColors[labels[i][j]]:
@@ -87,13 +86,14 @@ def mouse_paint(event, x, y, flags, params):
     elif event == cv2.EVENT_LBUTTONUP:
         clicking = False
 
+
 # Advanced functionality 3
 # Draw Rectangle 
 def rectangle(event, x, y, flags, params):
     global painting, color, clicking, x1, y1, x2, y2, thickness
     if event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
-        x1 = x   
+        x1 = x
         y1 = y
         x2 = x
         y2 = y
@@ -107,12 +107,13 @@ def rectangle(event, x, y, flags, params):
         clicking = False
         cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
 
+
 # Draw Circle
 def circle(event, x, y, flags, params):
     global painting, color, clicking, x1, y1, x2, y2, thickness
     if event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
-        x1 = x   
+        x1 = x
         y1 = y
         x2 = x
         y2 = y
@@ -120,11 +121,13 @@ def circle(event, x, y, flags, params):
         copy = painting.copy()
         x2 = x
         y2 = y
-        cv2.circle(copy,(int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))), color, thickness)
+        cv2.circle(copy, (int((x2 + x1) / 2), int((y2 + y1) / 2)),
+                   int(sqrt((pow(((x2 - x1) / 2), 2)) + pow(((y2 - y1) / 2), 2))), color, thickness)
         cv2.imshow('Augmented Reality Paint', copy)
     elif event == cv2.EVENT_LBUTTONUP:
         clicking = False
-        cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
+        cv2.circle(painting, (int((x1 + x) / 2), int((y1 + y) / 2)),
+                   int(sqrt((pow(((x1 - x) / 2), 2)) + pow(((y1 - y) / 2), 2))), color, thickness)
 
 
 def main():
@@ -142,8 +145,10 @@ def main():
     parser.add_argument('-usp', '--use_shake_prevention', action='store_true', help='If present, it will prevent big '
                                                                                     'lines to appear across the white'
                                                                                     ' board', required=False)
-    parser.add_argument('-uvs', '--use_video_stream', required=False, help='If present, the video capture window is '
-                                                                           'used to draw instead of the white board')
+    parser.add_argument('-uvs', '--use_video_stream', action='store_true', required=False, help='If present, the '
+                                                                                                'video capture window '
+                                                                                                'is '
+                                                                                                'used to draw instead of the white board')
     parser.add_argument('-um', '--use_mouse', action='store_true', help='If present, the position of the mouse will '
                                                                         'be used to draw', required=False)
 
@@ -159,7 +164,8 @@ def main():
     window1_name = "Augmented Reality Paint"
     window2_name = "Video Capture"
     window3_name = "Mask"
-    cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
+    if not args.use_video_stream:
+        cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window2_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window3_name, cv2.WINDOW_KEEPRATIO)
     print(window1_name)
@@ -169,20 +175,23 @@ def main():
 
     _, image_capture = capture.read()
     height, width, _ = image_capture.shape
-    painting = np.ones((height, width, 3)) * 255
-    cv2.imshow(window1_name, painting)
-    
+
+    if args.use_video_stream:
+        painting = np.zeros((height, width, 3))
+    else:
+        painting = np.ones((height, width, 3)) * 255
+
+    if not args.use_video_stream:
+        cv2.imshow(window1_name, painting)
+        cv2.setMouseCallback(window1_name, mouse_paint)
+
     # Coloring image mode
     if args.coloring_image_mode:
         cImage, labelColors, labelMatrix = load_coloring_image(height, width)
-        cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))        
-
-    cv2.setMouseCallback(window1_name, mouse_paint)
+        cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
 
     x_last = None
-    y_last = None 
-
-    line = np.zeros((height, width, 3))
+    y_last = None
 
     # -----------------------------------------------------
     # Execution
@@ -192,12 +201,13 @@ def main():
         if args.coloring_image_mode:
             cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
         else:
-            # Show White Board same size as capture
-            cv2.imshow(window1_name, painting)
-            
+            if not args.use_video_stream:
+                # Show White Board same size as capture
+                cv2.imshow(window1_name, painting)
+
         # Get an image from the camera
         _, image_capture = capture.read()
-        image_capture = cv2.flip(image_capture, 1) # Flip image
+        image_capture = cv2.flip(image_capture, 1)  # Flip image
 
         # Processing Mask
         mins = np.array([ranges['limits']['B']['min'], ranges['limits']['G']['min'], ranges['limits']['R']['min']])
@@ -231,29 +241,37 @@ def main():
         x = int(centroids[max_area_Label, 0])
         y = int(centroids[max_area_Label, 1])
         if x_last != None and y_last != None:
-            if args.use_shake_prevention:
-            # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
-                dist = ((x - x_last)**2 + (y - y_last)**2)**(1/2)
-                if dist < 50:
-                    cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                else:
-                    cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
-            else:
+            if args.use_video_stream:
+                # Draw in Video Capture Test
                 cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                painting = painting.astype(np.uint8)
+                painting_mask = deepcopy(painting)
+                painting_mask = cv2.cvtColor(painting_mask, cv2.COLOR_BGRA2GRAY)
+                _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
+                painting_mask = painting_mask.astype(bool)
+                image_capture[painting_mask] = (0, 0, 0)
+                image_capture = cv2.add(image_capture, painting)
+            else:
+                if args.use_shake_prevention:
+                    # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
+                    dist = ((x - x_last) ** 2 + (y - y_last) ** 2) ** (1 / 2)
+                    if dist < 50:
+                        cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                    else:
+                        cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
+                else:
+                    cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
 
-            # Draw in Video Capture Test
-            cv2.line(line, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-            line = line.astype(np.uint8)
-            image_capture = cv2.add(image_capture, line)
         x_last = x
         y_last = y
 
         # Show Capture Window
         cv2.imshow(window2_name, image_capture)
-        
-        cv2.resizeWindow(window1_name, (width//3, height//3))
-        cv2.resizeWindow(window2_name, (width//3, height//3))
-        cv2.resizeWindow(window3_name, (width//3, height//3))
+
+        if not args.use_video_stream:
+            cv2.resizeWindow(window1_name, (width // 3, height // 3))
+        cv2.resizeWindow(window2_name, (width // 3, height // 3))
+        cv2.resizeWindow(window3_name, (width // 3, height // 3))
 
         # Deal with keyboard events
         key = cv2.waitKey(20)
@@ -275,10 +293,13 @@ def main():
             elif key == ord('E') or key == ord('e'):
                 _, image_capture = capture.read()
                 height, width, _ = image_capture.shape
-                painting = np.ones((height, width, 3)) * 255
-                cv2.imshow(window1_name, painting)
+                if args.use_video_stream:
+                    painting = np.zeros((height, width, 3))
+                else:
+                    painting = np.ones((height, width, 3)) * 255
+                    cv2.imshow(window1_name, painting)
             elif key == ord('+'):
-                if thickness < 20: 
+                if thickness < 20:
                     thickness += 1
                     print('Increase thickness')
                 else:
@@ -287,30 +308,31 @@ def main():
                 if thickness > 1:
                     thickness -= 1
                     print('Decrease thickness')
-                else: 
+                else:
                     print('The thickness value has reached is limit, try to increase it')
             elif key == ord('C') or key == ord('c'):
                 cv2.setMouseCallback(window1_name, circle)
                 if not cv2.EVENT_MOUSEMOVE:
                     copy = painting.copy()
-                    cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
-                    cv2.imshow(window1_name,copy)
+                    cv2.circle(copy, (int((x2 + x1) / 2), int((y2 + y1) / 2)),
+                               int(sqrt((pow(((x2 - x1) / 2), 2)) + pow(((y2 - y1) / 2), 2))), color, thickness)
+                    cv2.imshow(window1_name, copy)
             elif key == ord('S') or key == ord('s'):
-                cv2.setMouseCallback(window1_name,rectangle)
+                cv2.setMouseCallback(window1_name, rectangle)
                 if not cv2.EVENT_MOUSEMOVE:
                     copy = painting.copy()
-                    cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
-                    cv2.imshow(window1_name,copy)
+                    cv2.rectangle(copy, (x1, y1), (x2, y2), color, thickness)
+                    cv2.imshow(window1_name, copy)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
                     misses = 0
                     for i in range(height):
                         for j in range(width):
-                            rightColor = labelColors[labelMatrix[i,j]]
+                            rightColor = labelColors[labelMatrix[i, j]]
                             if rightColor == (0, 0, 0):
                                 pass
-                            elif np.array_equal(painting[i,j], rightColor):
+                            elif np.array_equal(painting[i, j], rightColor):
                                 hits += 1
                             else:
                                 misses += 1
