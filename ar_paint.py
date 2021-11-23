@@ -8,7 +8,7 @@ from pprint import pprint
 import numpy as np
 import cv2
 import argparse
-import copy
+from copy import deepcopy
 from math import sqrt, pow
 from colorama import Fore,Style
 
@@ -203,7 +203,7 @@ def main():
         maxs = np.array([ranges['limits']['B']['max'], ranges['limits']['G']['max'], ranges['limits']['R']['max']])
         mask = cv2.inRange(image_capture, mins, maxs)
         mask = mask.astype(bool)  # conversion from numpy uint8 to bool
-        image_processed = copy.deepcopy(image_capture)
+        image_processed = deepcopy(image_capture)
         image_processed[np.logical_not(mask)] = 0
 
         # Show Mask Window
