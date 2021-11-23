@@ -242,9 +242,7 @@ def main():
 
             # Draw in Video Capture Test
             cv2.line(line, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-            print(line.dtype)
             line = line.astype(np.uint8)
-            print(line.dtype)
             # exit(0)
             image_capture = cv2.add(image_capture, line)
         x_last = x
