@@ -17,6 +17,7 @@ from colorama import Fore,Style
 clicking = False
 color = (0, 0, 255)  # BGR, Red by default
 thickness = 2
+x1, y1, x2, y2 = 0, 0, 0, 0
 
 
 # Obtain a numbered inverted image, labels and label-color matches
@@ -122,15 +123,15 @@ def circle(event, x, y, flags, params):
         cv2.circle(copy,(int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))), color, thickness)
         cv2.imshow('Augmented Reality Paint', copy)
     elif event == cv2.EVENT_LBUTTONUP:
-            clicking = False
-            cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
+        clicking = False
+        cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
 
 
 def main():
     # -----------------------------------------------------
     # Initialize
     # -----------------------------------------------------
-    global painting, color, labels, thickness
+    global painting, color, labels, thickness, x1, y1, x2, y2
 
     # Define argparse inputs
     parser = argparse.ArgumentParser(description='Definition of test mode')
