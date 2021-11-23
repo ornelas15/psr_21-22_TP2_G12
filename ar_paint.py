@@ -16,6 +16,7 @@ from colorama import Fore,Style
 # -----------------------------------------------------
 clicking = False
 color = (0, 0, 255)  # BGR, Red by default
+thickness = 2
 
 
 # obtain a numbered inverted image, labels and label-color matches
@@ -87,31 +88,40 @@ def mouse_paint(event, x, y, flags, params):
 
 #Funcionalidade Avançada 3
 def rectangle(event, x, y, flags, params):
-    global painting, color, clicking, x1, y1
+    global painting, color, clicking, x1, y1, x2, y2, thickness
     if event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
         x1 = x   
         y1 = y
-    elif event == cv2.EVENT_MOUSEMOVE:
-        clicking = True
-        #cv2.rectangle(painting, (x1, y1), (x, y), color, 3)
+        x2 = x
+        y2 = y
+    elif event == cv2.EVENT_MOUSEMOVE and clicking:
+        copy = painting.copy()
+        x2 = x
+        y2 = y
+        cv2.rectangle(copy, (x1, y1), (x2, y2), color, thickness)
+        cv2.imshow('Augmented Reality Paint', copy)
     elif event == cv2.EVENT_LBUTTONUP:
-            clicking = False
-            cv2.rectangle(painting, (x1, y1), (x, y), color, 3)
-    
+        clicking = False
+        cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
 
 def circle(event, x, y, flags, params):
-    global painting, color, clicking, x1, y1, radius
+    global painting, color, clicking, x1, y1, x2, y2, thickness
     if event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
         x1 = x   
         y1 = y
-    elif event == cv2.EVENT_MOUSEMOVE:
-        clicking = True
-        #cv2.circle(painting, (x1, y1), radius, color, 3)
+        x2 = x
+        y2 = y
+    elif event == cv2.EVENT_MOUSEMOVE and clicking:
+        copy = painting.copy()
+        x2 = x
+        y2 = y
+        cv2.circle(copy,(int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))), color, thickness)
+        cv2.imshow('Augmented Reality Paint', copy)
     elif event == cv2.EVENT_LBUTTONUP:
             clicking = False
-            cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, 3)
+            cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
 
 
 def main():
@@ -275,6 +285,16 @@ def main():
                 print('Decrease thickness')
             elif key == ord('C') or key == ord('c'):
                 cv2.setMouseCallback(window1_name, circle)
+                if not cv2.EVENT_MOUSEMOVE:
+                    copy = painting.copy()
+                    cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
+                    cv2.imshow(window1_name,copy)
+            elif key == ord('R') or key == ord('r'):
+                cv2.setMouseCallback(window1_name,rectangle)
+                if not cv2.EVENT_MOUSEMOVE:
+                    copy = painting.copy()
+                    cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
+                    cv2.imshow(window1_name,copy)
             elif key == ord('S') or key == ord('s'):
                 cv2.setMouseCallback(window1_name,rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
