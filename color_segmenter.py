@@ -39,7 +39,7 @@ def main():
 
     # configure opencv window
     window_name = 'Color Segmentor'
-    cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
+    cv2.namedWindow(window_name, cv2.WINDOW_KEEPRATIO)
 
     # Create Trackbar
     cv2.createTrackbar('MinB', window_name, 0, 256, onTrackbar)
@@ -77,8 +77,12 @@ def main():
         image_processed = copy.deepcopy(image)
         image_processed[np.logical_not(mask)] = 0
 
+        height, width, _ = image_processed.shape
+
         # show window
         cv2.imshow(window_name, image_processed)
+
+        cv2.resizeWindow(window_name, (width // 2, height // 2))
 
         # Read Key
         key = cv2.waitKey(30)
