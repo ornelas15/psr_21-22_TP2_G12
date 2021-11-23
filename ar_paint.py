@@ -15,6 +15,7 @@ from colorama import Fore,Style
 # GLOBAL VARIABLES
 # -----------------------------------------------------
 clicking = False
+drawing = False
 color = (0, 0, 255)  # BGR, Red by default
 thickness = 2
 x1, y1, x2, y2 = 0, 0, 0, 0
@@ -90,26 +91,26 @@ def mouse_paint(event, x, y, flags, params):
 # Advanced functionality 3
 # Draw Rectangle 
 def rectangle(event, x, y, flags, params):
-    global painting, color, clicking, x1, y1, x2, y2, thickness
+    global painting, color, clicking, x1, y1, x2, y2, thickness, drawing
     if event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
-        x1 = x   
+        x1 = x
         y1 = y
         x2 = x
         y2 = y
     elif event == cv2.EVENT_MOUSEMOVE and clicking:
-        copy = painting.copy()
         x2 = x
         y2 = y
-        cv2.rectangle(copy, (x1, y1), (x2, y2), color, thickness)
-        cv2.imshow('Augmented Reality Paint', copy)
     elif event == cv2.EVENT_LBUTTONUP:
         clicking = False
+        drawing = False
         cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
+        x1, y1, x2, y2 = 0, 0, 0, 0
+        
 
 # Draw Circle
 def circle(event, x, y, flags, params):
-    global painting, color, clicking, x1, y1, x2, y2, thickness
+    global painting, color, clicking, x1, y1, x2, y2, thickness, drawing
     if event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
         x1 = x   
@@ -117,21 +118,20 @@ def circle(event, x, y, flags, params):
         x2 = x
         y2 = y
     elif event == cv2.EVENT_MOUSEMOVE and clicking:
-        copy = painting.copy()
         x2 = x
         y2 = y
-        cv2.circle(copy,(int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))), color, thickness)
-        cv2.imshow('Augmented Reality Paint', copy)
     elif event == cv2.EVENT_LBUTTONUP:
         clicking = False
+        drawing = False
         cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
+        x1, y1, x2, y2 = 0, 0, 0, 0
 
 
 def main():
     # -----------------------------------------------------
     # Initialize
     # -----------------------------------------------------
-    global painting, color, labels, thickness, x1, y1, x2, y2
+    global painting, color, labels, thickness, x1, y1, x2, y2, drawing, clicking
 
     # Define argparse inputs
     parser = argparse.ArgumentParser(description='Definition of test mode')
@@ -175,9 +175,7 @@ def main():
     # Coloring image mode
     if args.coloring_image_mode:
         cImage, labelColors, labelMatrix = load_coloring_image(height, width)
-        cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))        
-
-    cv2.setMouseCallback(window1_name, mouse_paint)
+        cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))           
 
     x_last = None
     y_last = None 
@@ -247,6 +245,22 @@ def main():
             image_capture = cv2.add(image_capture, line)
         x_last = x
         y_last = y
+        
+        if drawing:
+            copy = painting.copy()
+            if drawing=="S":
+                cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
+            elif drawing=="C":
+                cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
+            
+            if args.coloring_image_mode:
+                cv2.imshow(window1_name, cv2.subtract(copy, cImage, dtype=cv2.CV_64F))
+            else:
+                # Show White Board same size as capture
+                cv2.imshow(window1_name, copy)
+        
+        else:
+            cv2.setMouseCallback(window1_name, mouse_paint) 
 
         # Show Capture Window
         cv2.imshow(window2_name, image_capture)
@@ -290,17 +304,11 @@ def main():
                 else: 
                     print('The thickness value has reached is limit, try to increase it')
             elif key == ord('C') or key == ord('c'):
+                drawing = "C"
                 cv2.setMouseCallback(window1_name, circle)
-                if not cv2.EVENT_MOUSEMOVE:
-                    copy = painting.copy()
-                    cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
-                    cv2.imshow(window1_name,copy)
             elif key == ord('S') or key == ord('s'):
-                cv2.setMouseCallback(window1_name,rectangle)
-                if not cv2.EVENT_MOUSEMOVE:
-                    copy = painting.copy()
-                    cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
-                    cv2.imshow(window1_name,copy)
+                drawing = "S"
+                cv2.setMouseCallback(window1_name, rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
