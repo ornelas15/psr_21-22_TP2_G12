@@ -15,10 +15,7 @@ from colorama import Fore, Style
 # GLOBAL VARIABLES
 # -----------------------------------------------------
 clicking = False
-drawing = False
-color = (0, 0, 255)  # BGR, Red by default
-thickness = 2
-x1, y1, x2, y2 = 0, 0, 0, 0
+x, y = 0, 0
 
 
 # Obtain a numbered inverted image, labels and label-color matches
@@ -75,11 +72,12 @@ def load_coloring_image(height, width):
 
 
 # Deal with mouse events
-def mouse_paint(event, x, y, flags, params):
-    global clicking, painting
+def mouse_paint(event, mx, my, flags, params):
+    global clicking, x, y
 
     if event == cv2.EVENT_MOUSEMOVE and clicking:
-        painting[y, x] = color
+        x = mx
+        y = my
 
     elif event == cv2.EVENT_LBUTTONDOWN:
         clicking = True
@@ -88,53 +86,11 @@ def mouse_paint(event, x, y, flags, params):
         clicking = False
 
 
-"""
-# Advanced functionality 3
-# Draw Rectangle 
-def rectangle(event, x, y, flags, params):
-    global painting, color, clicking, x1, y1, x2, y2, thickness, drawing
-    if event == cv2.EVENT_LBUTTONDOWN:
-        clicking = True
-        x1 = x
-        y1 = y
-        x2 = x
-        y2 = y
-    elif event == cv2.EVENT_MOUSEMOVE and clicking:
-        x2 = x
-        y2 = y
-    elif event == cv2.EVENT_LBUTTONUP:
-        clicking = False
-        drawing = False
-        cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
-        x1, y1, x2, y2 = 0, 0, 0, 0
-        
-
-
-# Draw Circle
-def circle(event, x, y, flags, params):
-    global painting, color, clicking, x1, y1, x2, y2, thickness, drawing
-    if event == cv2.EVENT_LBUTTONDOWN:
-        clicking = True
-        x1 = x
-        y1 = y
-        x2 = x
-        y2 = y
-    elif event == cv2.EVENT_MOUSEMOVE and clicking:
-        x2 = x
-        y2 = y
-    elif event == cv2.EVENT_LBUTTONUP:
-        clicking = False
-        drawing = False
-        cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
-        x1, y1, x2, y2 = 0, 0, 0, 0
-"""
-
-
 def main():
     # -----------------------------------------------------
     # Initialize
     # -----------------------------------------------------
-    global painting, color, labels, thickness, x1, y1, x2, y2, drawing, clicking
+    global clicking, x, y
 
     # Define argparse inputs
     parser = argparse.ArgumentParser(description='Definition of test mode')
@@ -149,8 +105,6 @@ def main():
                                                                                                 'video capture window '
                                                                                                 'is '
                                                                                                 'used to draw instead of the white board')
-    parser.add_argument('-um', '--use_mouse', action='store_true', help='If present, the position of the mouse will '
-                                                                        'be used to draw', required=False)
 
     # Parse arguments
     args = parser.parse_args()
@@ -202,6 +156,14 @@ def main():
 
     x_last = None
     y_last = None
+    
+    x1, y1, x2, y2 = 0, 0, 0, 0
+    
+    thickness = 2
+    
+    drawing = False
+    
+    color = (0, 0, 255)  # BGR, Red by default
 
     # -----------------------------------------------------
     # Execution
@@ -247,30 +209,35 @@ def main():
         mask2 = mask2.astype(bool)
         image_capture[mask2] = (0, 255, 0)
 
+
+        # if mouse not pressed use centroid coordinates
+        if not clicking:
+            x = int(centroids[max_area_Label, 0])
+            y = int(centroids[max_area_Label, 1])
+
         # Draw Line on White Board
-        x = int(centroids[max_area_Label, 0])
-        y = int(centroids[max_area_Label, 1])
-        if x_last != None and y_last != None:
-            if args.use_video_stream:
-                # Draw in Video Capture Test
-                cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                painting = painting.astype(np.uint8)
-                painting_mask = deepcopy(painting)
-                painting_mask = cv2.cvtColor(painting_mask, cv2.COLOR_BGRA2GRAY)
-                _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
-                painting_mask = painting_mask.astype(bool)
-                image_capture[painting_mask] = (0, 0, 0)
-                image_capture = cv2.add(image_capture, painting)
-            else:
-                if args.use_shake_prevention:
-                    # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
-                    dist = ((x - x_last) ** 2 + (y - y_last) ** 2) ** (1 / 2)
-                    if dist < 50:
-                        cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                    else:
-                        cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
-                else:
+        if not drawing:
+            if x_last != None and y_last != None:
+                if args.use_video_stream:
+                    # Draw in Video Capture Test
                     cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                    painting = painting.astype(np.uint8)
+                    painting_mask = deepcopy(painting)
+                    painting_mask = cv2.cvtColor(painting_mask, cv2.COLOR_BGRA2GRAY)
+                    _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
+                    painting_mask = painting_mask.astype(bool)
+                    image_capture[painting_mask] = (0, 0, 0)
+                    image_capture = cv2.add(image_capture, painting)
+                else:
+                    if args.use_shake_prevention:
+                        # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
+                        dist = ((x - x_last) ** 2 + (y - y_last) ** 2) ** (1 / 2)
+                        if dist < 50:
+                            cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                        else:
+                            cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
+                    else:
+                        cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
 
         x_last = x
         y_last = y
@@ -325,7 +292,7 @@ def main():
             elif key == ord('W') or key == ord('w'):
                 name = str(ctime(time()))
                 cv2.imwrite(name + '.jpg', painting)
-            elif key == ord('E') or key == ord('e'):
+            elif key == ord('C') or key == ord('c'):
                 print(Fore.WHITE + Style.BRIGHT + 'Image Captured' + Style.RESET_ALL)
                 _, image_capture = capture.read()
                 height, width, _ = image_capture.shape
@@ -346,34 +313,28 @@ def main():
                     print(Fore.WHITE + Style.BRIGHT +'Decrease thickness' + Style.RESET_ALL)
                 else:
                     print(Fore.RED + Style.BRIGHT +'The thickness value has reached is limit, try to increase it' + Style.RESET_ALL)
-            elif key == ord('C') or key == ord('c'):
+            elif key == ord('O') or key == ord('o'):
                 if not drawing:
                     print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
                     drawing = "C"
                     x1 = x
                     y1 = y
-                    x2 = x
-                    y2 = y
                 else:
+                    print(Fore.MAGENTA + Style.BRIGHT +'Circle Drawn' + Style.RESET_ALL)
                     cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
                     drawing = False
                     x1, y1, x2, y2 = 0, 0, 0, 0
-                #cv2.setMouseCallback(window1_name, circle)
-                #cv2.setMouseCallback(window2_name, circle)
             elif key == ord('S') or key == ord('s'):
                 if not drawing:
                     print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
                     drawing = "S"
                     x1 = x
                     y1 = y
-                    x2 = x
-                    y2 = y
                 else:
+                    print(Fore.MAGENTA + Style.BRIGHT +'Rectangle Drawn' + Style.RESET_ALL)
                     cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
                     drawing = False
                     x1, y1, x2, y2 = 0, 0, 0, 0
-                #cv2.setMouseCallback(window1_name, rectangle)
-                #cv2.setMouseCallback(window2_name, rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
