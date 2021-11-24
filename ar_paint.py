@@ -88,6 +88,7 @@ def mouse_paint(event, x, y, flags, params):
         clicking = False
 
 
+"""
 # Advanced functionality 3
 # Draw Rectangle 
 def rectangle(event, x, y, flags, params):
@@ -126,6 +127,7 @@ def circle(event, x, y, flags, params):
         drawing = False
         cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
         x1, y1, x2, y2 = 0, 0, 0, 0
+"""
 
 
 def main():
@@ -277,6 +279,8 @@ def main():
         cv2.imshow(window2_name, image_capture)
         
         if drawing:
+            y2 = y
+            x2 = x
             if args.use_video_stream:
                 copy = image_capture.copy()
             else:
@@ -343,15 +347,33 @@ def main():
                 else:
                     print(Fore.RED + Style.BRIGHT +'The thickness value has reached is limit, try to increase it' + Style.RESET_ALL)
             elif key == ord('C') or key == ord('c'):
-                print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
-                drawing = "C"
-                cv2.setMouseCallback(window1_name, circle)
-                cv2.setMouseCallback(window2_name, circle)
+                if not drawing:
+                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
+                    drawing = "C"
+                    x1 = x
+                    y1 = y
+                    x2 = x
+                    y2 = y
+                else:
+                    cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
+                    drawing = False
+                    x1, y1, x2, y2 = 0, 0, 0, 0
+                #cv2.setMouseCallback(window1_name, circle)
+                #cv2.setMouseCallback(window2_name, circle)
             elif key == ord('S') or key == ord('s'):
-                print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
-                drawing = "S"
-                cv2.setMouseCallback(window1_name, rectangle)
-                cv2.setMouseCallback(window2_name, rectangle)
+                if not drawing:
+                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
+                    drawing = "S"
+                    x1 = x
+                    y1 = y
+                    x2 = x
+                    y2 = y
+                else:
+                    cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
+                    drawing = False
+                    x1, y1, x2, y2 = 0, 0, 0, 0
+                #cv2.setMouseCallback(window1_name, rectangle)
+                #cv2.setMouseCallback(window2_name, rectangle)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
