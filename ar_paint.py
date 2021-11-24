@@ -105,7 +105,6 @@ def main():
     # Open and Load json File
     with open(args.json) as f:
         ranges = json.load(f)
-    pprint(ranges)
 
     # Configure opencv windows
     window1_name = "Augmented Reality Paint"
@@ -115,7 +114,7 @@ def main():
     cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window2_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window3_name, cv2.WINDOW_KEEPRATIO)
-    print(Fore.GREEN + Style.BRIGHT + window1_name + Style.RESET_ALL)
+    print('\n' + Fore.GREEN + Style.BRIGHT + window1_name + Style.RESET_ALL)
     print(Fore.CYAN + Style.BRIGHT + " \n Test functionalities:" + Style.RESET_ALL)
     print(Fore.CYAN + "  Red line color (press R)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Green line color (press G)" + Style.RESET_ALL)
@@ -123,8 +122,8 @@ def main():
     print(Fore.CYAN + "  Increase line thickness (press +)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Decrease line thickness (press -)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Image Capture (press E)" + Style.RESET_ALL)
-    print(Fore.CYAN + "  Draw Rectangle on White Board(press S)" + Style.RESET_ALL)
-    print(Fore.CYAN + "  Draw Circle on White Board(press C)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Draw Rectangle (press S)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Draw Circle (press C)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Terminate program (press Q)" + Style.RESET_ALL)
 
     # Setup video capture for webcam
@@ -160,13 +159,13 @@ def main():
 
     x_last = None
     y_last = None
-    
+
     x1, y1, x2, y2 = 0, 0, 0, 0
-    
+
     thickness = 2
-    
+
     drawing = False
-    
+
     color = (0, 0, 255)  # BGR, Red by default
 
     # -----------------------------------------------------
@@ -200,19 +199,26 @@ def main():
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
 
         # only update coordinates if it in fact finds 2 components
-        if num_labels>1:
+        if num_labels > 1:
             # Get Object Max Area Centroid
-            max_area_Label = sorted([(i, stats[i, cv2.CC_STAT_AREA]) for i in range(num_labels)], key=lambda x: x[1])[-2][0]
+            max_area_Label = \
+                sorted([(i, stats[i, cv2.CC_STAT_AREA]) for i in range(num_labels)], key=lambda x: x[1])[-2][0]
 
             mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
             mask2 = mask2.astype(bool)
             image_capture[mask2] = (0, 255, 0)
-            
+
+            # Cross On Centroid
+            cv2.line(image_capture, (x, y), (x + 5, y), (0, 0, 0), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x - 5, y), (0, 0, 0), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x, y + 5), (0, 0, 0), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x, y - 5), (0, 0, 0), 2, cv2.LINE_4)
+
             # if mouse not pressed use centroid coordinates
             if not clicking:
                 x = int(centroids[max_area_Label, 0])
                 y = int(centroids[max_area_Label, 1])
-        
+
         # Show Capture Window
         cv2.imshow(window2_name, image_capture)
 
@@ -230,22 +236,23 @@ def main():
 
         x_last = x
         y_last = y
-        
+
         # make a copy of painting to join all "layers" of the image
         copy = painting.copy()
-        
+
         if drawing:
             y2 = y
             x2 = x
-            
-            if drawing=="S":
-                cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
-            elif drawing=="C":
-                cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
-        
+
+            if drawing == "S":
+                cv2.rectangle(copy, (x1, y1), (x2, y2), color, thickness)
+            elif drawing == "C":
+                cv2.circle(copy, (int((x2 + x1) / 2), int((y2 + y1) / 2)),
+                           int(sqrt((pow(((x2 - x1) / 2), 2)) + pow(((y2 - y1) / 2), 2))), color, thickness)
+
         if args.coloring_image_mode:
             copy = cv2.subtract(copy, cImage, dtype=cv2.CV_64F)
-        
+
         """
         if args.use_video_stream:
             # Draw in Video Capture Test
@@ -256,9 +263,9 @@ def main():
             image_capture[painting_mask] = (0, 0, 0)
             copy = cv2.add(image_capture, copy, dtype=cv2.CV_64F)
         """
-        
+
         cv2.imshow(window1_name, copy)
-        
+
         # Show smaller windows
         cv2.resizeWindow(window1_name, (width // 3, height // 3))
         cv2.resizeWindow(window2_name, (width // 3, height // 3))
@@ -290,35 +297,38 @@ def main():
                     thickness += 1
                     print(Fore.WHITE + Style.BRIGHT + 'Increase thickness' + Style.RESET_ALL)
                 else:
-                    print(Fore.RED + Style.BRIGHT + 'The thickness value has reached is limit, try to decrease it' + Style.RESET_ALL)
+                    print(
+                        Fore.RED + Style.BRIGHT + 'The thickness value has reached is limit, try to decrease it' + Style.RESET_ALL)
             elif key == ord('-'):
                 if thickness > 1:
                     thickness -= 1
-                    print(Fore.WHITE + Style.BRIGHT +'Decrease thickness' + Style.RESET_ALL)
+                    print(Fore.WHITE + Style.BRIGHT + 'Decrease thickness' + Style.RESET_ALL)
                 else:
-                    print(Fore.RED + Style.BRIGHT +'The thickness value has reached is limit, try to increase it' + Style.RESET_ALL)
+                    print(
+                        Fore.RED + Style.BRIGHT + 'The thickness value has reached is limit, try to increase it' + Style.RESET_ALL)
             elif key == ord('O') or key == ord('o'):
                 if not drawing:
                     drawing = "C"
                     x1 = x
                     y1 = y
-                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
+                    print(Fore.MAGENTA + Style.BRIGHT + 'Draw Circle Selected' + Style.RESET_ALL)
                 else:
-                    cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
+                    cv2.circle(painting, (int((x1 + x) / 2), int((y1 + y) / 2)),
+                               int(sqrt((pow(((x1 - x) / 2), 2)) + pow(((y1 - y) / 2), 2))), color, thickness)
                     drawing = False
                     x1, y1, x2, y2 = 0, 0, 0, 0
-                    print(Fore.MAGENTA + Style.BRIGHT +'Circle Drawn' + Style.RESET_ALL)
+                    print(Fore.MAGENTA + Style.BRIGHT + 'Circle Drawn' + Style.RESET_ALL)
             elif key == ord('S') or key == ord('s'):
                 if not drawing:
                     drawing = "S"
                     x1 = x
                     y1 = y
-                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
+                    print(Fore.MAGENTA + Style.BRIGHT + 'Draw Rectangle Selected' + Style.RESET_ALL)
                 else:
                     cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
                     drawing = False
                     x1, y1, x2, y2 = 0, 0, 0, 0
-                    print(Fore.MAGENTA + Style.BRIGHT +'Rectangle Drawn' + Style.RESET_ALL)
+                    print(Fore.MAGENTA + Style.BRIGHT + 'Rectangle Drawn' + Style.RESET_ALL)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
@@ -335,7 +345,7 @@ def main():
 
                     print(hits)
                     print(hits / (hits + misses))
-                print(Fore.RED + Style.BRIGHT + "Quitting" + Style.RESET_ALL)
+                print('\n' + Fore.RED + Style.BRIGHT + "Quitting" + Style.RESET_ALL + '\n')
                 break
 
     # -----------------------------------------------------

@@ -16,6 +16,7 @@ import copy
 import json
 import cv2
 import numpy as np
+from colorama import Fore, Style, Back
 
 
 # FUNCTIONS
@@ -57,7 +58,7 @@ def main():
         _, image = capture.read()
 
         if image is None:
-            print('Video is over!')
+            print(Fore.CYAN + 'Video is over!' + Style.RESET_ALL)
             break  # video is over
 
         # Get Trackbar Position and update corresponding value in ranges dict
@@ -92,7 +93,9 @@ def main():
             with open(file_name, 'w') as file_handle:
                 json.dump(ranges, file_handle)
         elif key == ord('q'):
-            print('You pressed q! Terminating...')
+            print(Fore.CYAN + '\nYou pressed q!\n' + Style.RESET_ALL)
+            print(Fore.RED + Style.BRIGHT + Back.YELLOW + 'Terminating...' + Style.RESET_ALL)
+            print('\n')
             break
 
     # -----------------------------------------------------
