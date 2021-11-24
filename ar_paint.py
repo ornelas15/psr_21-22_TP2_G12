@@ -116,8 +116,8 @@ def main():
     window1_name = "Augmented Reality Paint"
     window2_name = "Video Capture"
     window3_name = "Mask"
-    if not args.use_video_stream:
-        cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
+
+    cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window2_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window3_name, cv2.WINDOW_KEEPRATIO)
     print(Fore.GREEN + Style.BRIGHT + window1_name + Style.RESET_ALL)
@@ -138,14 +138,10 @@ def main():
     _, image_capture = capture.read()
     height, width, _ = image_capture.shape
 
-    if args.use_video_stream:
-        painting = np.zeros((height, width, 3))
-    else:
-        painting = np.ones((height, width, 3)) * 255
+    painting = np.ones((height, width, 3)) * 255
 
-    if not args.use_video_stream:
-        cv2.imshow(window1_name, painting)
-        cv2.setMouseCallback(window1_name, mouse_paint)
+    cv2.imshow(window1_name, painting)
+    cv2.setMouseCallback(window1_name, mouse_paint)
 
     # Coloring image mode
     if args.coloring_image_mode:
@@ -171,9 +167,7 @@ def main():
         if args.coloring_image_mode:
             cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
         else:
-            if not args.use_video_stream:
-                # Show White Board same size as capture
-                cv2.imshow(window1_name, painting)
+            cv2.imshow(window1_name, painting)
 
         # Get an image from the camera
         _, image_capture = capture.read()
@@ -190,81 +184,73 @@ def main():
         # Show Mask Window
         cv2.imshow(window3_name, image_processed)
 
-        # if mouse not pressed use centroid coordinates
-        if not clicking:
-            # Get Object
-            image_grey = cv2.cvtColor(image_processed, cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(image_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
+        # Get Object
+        image_grey = cv2.cvtColor(image_processed, cv2.COLOR_BGR2GRAY)
+        _, thresh = cv2.threshold(image_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
 
-            # only update coordinates if it in fact finds 2 components
-            if num_labels>1:
-                # Get Object Max Area Centroid
-                max_area_Label = sorted([(i, stats[i, cv2.CC_STAT_AREA]) for i in range(num_labels)], key=lambda x: x[1])[-2][0]
+        # only update coordinates if it in fact finds 2 components
+        if num_labels>1:
+            # Get Object Max Area Centroid
+            max_area_Label = sorted([(i, stats[i, cv2.CC_STAT_AREA]) for i in range(num_labels)], key=lambda x: x[1])[-2][0]
 
-                mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
-                mask2 = mask2.astype(bool)
-                image_capture[mask2] = (0, 255, 0)
+            mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
+            mask2 = mask2.astype(bool)
+            image_capture[mask2] = (0, 255, 0)
+            
+            # if mouse not pressed use centroid coordinates
+            if not clicking:
                 x = int(centroids[max_area_Label, 0])
                 y = int(centroids[max_area_Label, 1])
+        
+        # Show Capture Window
+        cv2.imshow(window2_name, image_capture)
 
-        # Draw Line on White Board
-        if not drawing:
-            if x_last != None and y_last != None:
-                if args.use_video_stream:
-                    # Draw in Video Capture Test
+        # Draw Line on Painting
+        if not drawing and x_last != None and y_last != None:
+            if args.use_shake_prevention:
+                # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
+                dist = ((x - x_last) ** 2 + (y - y_last) ** 2) ** (1 / 2)
+                if dist < 50:
                     cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                    painting = painting.astype(np.uint8)
-                    painting_mask = deepcopy(painting)
-                    painting_mask = cv2.cvtColor(painting_mask, cv2.COLOR_BGRA2GRAY)
-                    _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
-                    painting_mask = painting_mask.astype(bool)
-                    image_capture[painting_mask] = (0, 0, 0)
-                    image_capture = cv2.add(image_capture, painting)
                 else:
-                    if args.use_shake_prevention:
-                        # Distance = ((X2 - X1)² + (Y2 - Y1)²)**(1/2)
-                        dist = ((x - x_last) ** 2 + (y - y_last) ** 2) ** (1 / 2)
-                        if dist < 50:
-                            cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
-                        else:
-                            cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
-                    else:
-                        cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
+                    cv2.line(painting, (x, y), (x, y), color, thickness, cv2.LINE_4)
+            else:
+                cv2.line(painting, (x, y), (x_last, y_last), color, thickness, cv2.LINE_4)
 
         x_last = x
         y_last = y
         
-        # Show Capture Window
-        cv2.imshow(window2_name, image_capture)
+        # make a copy of painting to join all "layers" of the image
+        copy = painting.copy()
         
         if drawing:
             y2 = y
             x2 = x
-            if args.use_video_stream:
-                copy = image_capture.copy()
-            else:
-                copy = painting.copy()
+            
             if drawing=="S":
                 cv2.rectangle(copy,(x1,y1),(x2,y2),color,thickness)
             elif drawing=="C":
                 cv2.circle(copy, (int((x2+x1)/2), int((y2+y1)/2)), int(sqrt((pow(((x2-x1)/2),2))+ pow(((y2-y1)/2),2))) , color, thickness)
-            
-            if args.use_video_stream:
-                name = window2_name
-            else:
-                name = window1_name
-            if args.coloring_image_mode:
-                cv2.imshow(name, cv2.subtract(copy, cImage, dtype=cv2.CV_64F))
-            else:
-                # Show White Board same size as capture
-                cv2.imshow(name, copy)
         
-        else:
-            cv2.setMouseCallback(window1_name, mouse_paint) 
-
-        if not args.use_video_stream:
-            cv2.resizeWindow(window1_name, (width // 3, height // 3))
+        if args.coloring_image_mode:
+            copy = cv2.subtract(copy, cImage, dtype=cv2.CV_64F)
+        
+        """
+        if args.use_video_stream:
+            # Draw in Video Capture Test
+            painting_mask = deepcopy(copy)
+            painting_mask = cv2.cvtColor(painting_mask.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+            _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
+            painting_mask = painting_mask.astype(bool)
+            image_capture[painting_mask] = (0, 0, 0)
+            copy = cv2.add(image_capture, copy, dtype=cv2.CV_64F)
+        """
+        
+        cv2.imshow(window1_name, copy)
+        
+        # Show smaller windows
+        cv2.resizeWindow(window1_name, (width // 3, height // 3))
         cv2.resizeWindow(window2_name, (width // 3, height // 3))
         cv2.resizeWindow(window3_name, (width // 3, height // 3))
 
@@ -286,14 +272,8 @@ def main():
                 name = str(ctime(time()))
                 cv2.imwrite(name + '.jpg', painting)
             elif key == ord('C') or key == ord('c'):
-                print(Fore.WHITE + Style.BRIGHT + 'Image Captured' + Style.RESET_ALL)
-                _, image_capture = capture.read()
-                height, width, _ = image_capture.shape
-                if args.use_video_stream:
-                    painting = np.zeros((height, width, 3))
-                else:
-                    painting = np.ones((height, width, 3)) * 255
-                    cv2.imshow(window1_name, painting)
+                painting = np.ones((height, width, 3)) * 255
+                print(Fore.WHITE + Style.BRIGHT + 'Image cleared' + Style.RESET_ALL)
             elif key == ord('+'):
                 if thickness < 20:
                     thickness += 1
@@ -308,26 +288,26 @@ def main():
                     print(Fore.RED + Style.BRIGHT +'The thickness value has reached is limit, try to increase it' + Style.RESET_ALL)
             elif key == ord('O') or key == ord('o'):
                 if not drawing:
-                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
                     drawing = "C"
                     x1 = x
                     y1 = y
+                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
                 else:
-                    print(Fore.MAGENTA + Style.BRIGHT +'Circle Drawn' + Style.RESET_ALL)
                     cv2.circle(painting, (int((x1+x)/2), int((y1+y)/2)), int(sqrt((pow(((x1-x)/2),2))+ pow(((y1-y)/2),2))) , color, thickness)
                     drawing = False
                     x1, y1, x2, y2 = 0, 0, 0, 0
+                    print(Fore.MAGENTA + Style.BRIGHT +'Circle Drawn' + Style.RESET_ALL)
             elif key == ord('S') or key == ord('s'):
                 if not drawing:
-                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
                     drawing = "S"
                     x1 = x
                     y1 = y
+                    print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
                 else:
-                    print(Fore.MAGENTA + Style.BRIGHT +'Rectangle Drawn' + Style.RESET_ALL)
                     cv2.rectangle(painting, (x1, y1), (x, y), color, thickness)
                     drawing = False
                     x1, y1, x2, y2 = 0, 0, 0, 0
+                    print(Fore.MAGENTA + Style.BRIGHT +'Rectangle Drawn' + Style.RESET_ALL)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
                 if args.coloring_image_mode:
                     hits = 0
