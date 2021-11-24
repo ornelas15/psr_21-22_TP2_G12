@@ -26,8 +26,6 @@ def load_coloring_image(height, width):
 
     ret, thresh = cv2.threshold(cImage, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    # height, width = thresh.shape
-
     cImage = np.zeros((height, width)).astype(np.uint8)
 
     print(width)
@@ -192,28 +190,23 @@ def main():
         # Show Mask Window
         cv2.imshow(window3_name, image_processed)
 
-        # Get Object
-        image_grey = cv2.cvtColor(image_processed, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(image_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
-
-        # Get Object Max Area Centroid
-        max_area = 0
-        max_area_Label = 0
-        for i in range(num_labels):
-            if i != 0 and max_area < stats[i, cv2.CC_STAT_AREA]:
-                max_area = stats[i, cv2.CC_STAT_AREA]
-                max_area_Label = i
-
-        mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
-        mask2 = mask2.astype(bool)
-        image_capture[mask2] = (0, 255, 0)
-
-
         # if mouse not pressed use centroid coordinates
         if not clicking:
-            x = int(centroids[max_area_Label, 0])
-            y = int(centroids[max_area_Label, 1])
+            # Get Object
+            image_grey = cv2.cvtColor(image_processed, cv2.COLOR_BGR2GRAY)
+            _, thresh = cv2.threshold(image_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
+
+            # only update coordinates if it in fact finds 2 components
+            if num_labels>1:
+                # Get Object Max Area Centroid
+                max_area_Label = sorted([(i, stats[i, cv2.CC_STAT_AREA]) for i in range(num_labels)], key=lambda x: x[1])[-2][0]
+
+                mask2 = cv2.inRange(labels, max_area_Label, max_area_Label)
+                mask2 = mask2.astype(bool)
+                image_capture[mask2] = (0, 255, 0)
+                x = int(centroids[max_area_Label, 0])
+                y = int(centroids[max_area_Label, 1])
 
         # Draw Line on White Board
         if not drawing:
@@ -363,4 +356,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
