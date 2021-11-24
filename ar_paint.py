@@ -166,7 +166,17 @@ def main():
         cv2.namedWindow(window1_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window2_name, cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow(window3_name, cv2.WINDOW_KEEPRATIO)
-    print(window1_name)
+    print(Fore.GREEN + Style.BRIGHT + window1_name + Style.RESET_ALL)
+    print(Fore.CYAN + Style.BRIGHT + " \n Test functionalities:" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Red line color (press R)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Green line color (press G)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Blue line color (press B)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Increase line thickness (press +)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Decrease line thickness (press -)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Image Capture (press E)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Draw Rectangle on White Board(press S)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Draw Circle on White Board(press C)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Terminate program (press Q)" + Style.RESET_ALL)
 
     # Setup video capture for webcam
     capture = cv2.VideoCapture(0)
@@ -298,20 +308,21 @@ def main():
         key = cv2.waitKey(20)
 
         if key != -1:
-            print("Pressed key: " + chr(key))
+            print(Fore.CYAN + Style.BRIGHT + "\nPressed key: " + chr(key) + Style.RESET_ALL)
             if key == ord('R') or key == ord('r'):
                 color = (0, 0, 255)
-                print('Red color selected')
+                print(Fore.RED + Style.BRIGHT + 'Red color selected' + Style.RESET_ALL)
             elif key == ord('G') or key == ord('g'):
                 color = (0, 255, 0)
-                print('Green color selected')
+                print(Fore.GREEN + Style.BRIGHT + 'Green color selected' + Style.RESET_ALL)
             elif key == ord('B') or key == ord('b'):
                 color = (255, 0, 0)
-                print('Blue color selected')
+                print(Fore.BLUE + Style.BRIGHT + 'Blue color selected' + Style.RESET_ALL)
             elif key == ord('W') or key == ord('w'):
                 name = str(ctime(time()))
                 cv2.imwrite(name + '.jpg', painting)
             elif key == ord('E') or key == ord('e'):
+                print(Fore.WHITE + Style.BRIGHT + 'Image Captured' + Style.RESET_ALL)
                 _, image_capture = capture.read()
                 height, width, _ = image_capture.shape
                 if args.use_video_stream:
@@ -322,20 +333,22 @@ def main():
             elif key == ord('+'):
                 if thickness < 20:
                     thickness += 1
-                    print('Increase thickness')
+                    print(Fore.WHITE + Style.BRIGHT + 'Increase thickness' + Style.RESET_ALL)
                 else:
-                    print('The thickness value has reached is limit, try to decrease it')
+                    print(Fore.RED + Style.BRIGHT + 'The thickness value has reached is limit, try to decrease it' + Style.RESET_ALL)
             elif key == ord('-'):
                 if thickness > 1:
                     thickness -= 1
-                    print('Decrease thickness')
+                    print(Fore.WHITE + Style.BRIGHT +'Decrease thickness' + Style.RESET_ALL)
                 else:
-                    print('The thickness value has reached is limit, try to increase it')
+                    print(Fore.RED + Style.BRIGHT +'The thickness value has reached is limit, try to increase it' + Style.RESET_ALL)
             elif key == ord('C') or key == ord('c'):
+                print(Fore.MAGENTA + Style.BRIGHT +'Draw Circle Selected' + Style.RESET_ALL)
                 drawing = "C"
                 cv2.setMouseCallback(window1_name, circle)
                 cv2.setMouseCallback(window2_name, circle)
             elif key == ord('S') or key == ord('s'):
+                print(Fore.MAGENTA + Style.BRIGHT +'Draw Rectangle Selected' + Style.RESET_ALL)
                 drawing = "S"
                 cv2.setMouseCallback(window1_name, rectangle)
                 cv2.setMouseCallback(window2_name, rectangle)
@@ -355,7 +368,7 @@ def main():
 
                     print(hits)
                     print(hits / (hits + misses))
-                print("Quitting")
+                print(Fore.RED + Style.BRIGHT + "Quitting" + Style.RESET_ALL)
                 break
 
     # -----------------------------------------------------
@@ -367,3 +380,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
