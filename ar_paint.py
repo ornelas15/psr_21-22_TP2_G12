@@ -11,6 +11,7 @@ import argparse
 from copy import deepcopy
 from math import sqrt, pow
 from colorama import Fore, Style
+import random
 
 # GLOBAL VARIABLES
 # -----------------------------------------------------
@@ -20,16 +21,13 @@ x, y = 0, 0
 
 # Obtain a numbered inverted image, labels and label-color matches
 def load_coloring_image(height, width):
-    cImage = cv2.imread("./images/ovni.png", cv2.IMREAD_GRAYSCALE)
+    cImage = cv2.imread(["./images/ovni.png", "./images/other.png"][random.randint(0,1)], cv2.IMREAD_GRAYSCALE)
 
     cImage = cv2.resize(cImage, (int(cImage.shape[1] * height / cImage.shape[0]), height))
 
-    ret, thresh = cv2.threshold(cImage, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    ret, thresh = cv2.threshold(cImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     cImage = np.zeros((height, width)).astype(np.uint8)
-
-    print(width)
-    print(thresh.shape)
 
     cImage[:, int(width / 2 - thresh.shape[1] / 2):int(width / 2 + thresh.shape[1] / 2)] = thresh
 
@@ -41,9 +39,6 @@ def load_coloring_image(height, width):
     labels = output[1]  # label matrix
     stats = output[2]  # statistics
     centroids = output[3]  # centroid matrix
-    print(stats)
-    print(centroids)
-    print(labels)
 
     # Associate a label with a color
     colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
@@ -55,14 +50,14 @@ def load_coloring_image(height, width):
                 if cImage[i][j] == 0:
                     labelColors[labels[i][j]] = (0, 0, 0)
                 else:
-                    labelColors[labels[i][j]] = colors[labels[i][j] % 3]
+                    labelColors[labels[i][j]] = colors[random.randint(0,2)]
 
     # Write the numbers on the image
-    fontScale = (width * height) / (800 * 800)
+    fontScale = (width * height) / (800 * 800) / 2
     for i in range(0, len(centroids)):
         if labelColors[i] != (0, 0, 0):
-            cv2.putText(cImage, str(i), (int(centroids[i][0] - fontScale * 15), int(centroids[i][1] + fontScale * 15)),
-                        cv2.FONT_HERSHEY_SIMPLEX, fontScale, (0, 0, 0), 1)
+            cv2.putText(cImage, str(i), (int(centroids[i][0] - fontScale * 13), int(centroids[i][1] + fontScale * 8)),
+                        cv2.FONT_HERSHEY_COMPLEX_SMALL, fontScale, (0, 0, 0), 1)
 
     cImage = cv2.bitwise_not(cImage)
 
@@ -147,6 +142,21 @@ def main():
     if args.coloring_image_mode:
         cImage, labelColors, labelMatrix = load_coloring_image(height, width)
         cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
+        
+        redLine="RED: "
+        blueLine="BLUE: "
+        greenLine="GREEN: "
+        for i in range(len(labelColors)):
+            if labelColors[i] == (0,0,255):
+                redLine += str(i) + ", "
+            elif labelColors[i] == (0,255,0):
+                greenLine += str(i) + ", "
+            elif labelColors[i] == (255,0,0):
+                blueLine += str(i) + ", "
+        print(Style.BRIGHT + "Colors to fill on the coloring image:" + Style.RESET_ALL)
+        print(Fore.RED + Style.BRIGHT + redLine[:-2] + Style.RESET_ALL)
+        print(Fore.GREEN + Style.BRIGHT + greenLine[:-2] + Style.RESET_ALL)
+        print(Fore.BLUE + Style.BRIGHT + blueLine[:-2] + Style.RESET_ALL)
 
     x_last = None
     y_last = None
@@ -271,6 +281,7 @@ def main():
             elif key == ord('W') or key == ord('w'):
                 name = str(ctime(time()))
                 cv2.imwrite(name + '.jpg', painting)
+                print(Fore.WHITE + Style.BRIGHT + 'Image saved' + Style.RESET_ALL)
             elif key == ord('C') or key == ord('c'):
                 painting = np.ones((height, width, 3)) * 255
                 print(Fore.WHITE + Style.BRIGHT + 'Image cleared' + Style.RESET_ALL)
