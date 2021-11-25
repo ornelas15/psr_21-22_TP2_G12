@@ -257,6 +257,7 @@ def main():
             image_capture[painting_mask] = (0, 0, 0)
             copy = cv2.add(image_capture.astype(np.uint8), copy.astype(np.uint8))
 
+        # intermediate drawing
         if drawing:
             y2 = y
             x2 = x
@@ -267,6 +268,7 @@ def main():
                 cv2.circle(copy, (int((x2 + x1) / 2), int((y2 + y1) / 2)),
                            int(sqrt((pow(((x2 - x1) / 2), 2)) + pow(((y2 - y1) / 2), 2))), color, thickness)
 
+        # paint the borders of the read image
         if args.coloring_image_mode:
             copy = cv2.subtract(copy.astype(np.uint8), cImage.astype(np.uint8))
 
@@ -293,7 +295,7 @@ def main():
                 print(Fore.BLUE + Style.BRIGHT + 'Blue color selected' + Style.RESET_ALL)
             elif key == ord('W') or key == ord('w'):
                 name = str(ctime(time()))
-                cv2.imwrite(name + '.jpg', painting)
+                cv2.imwrite(name + '.jpg', copy)
                 print(Fore.WHITE + Style.BRIGHT + 'Image saved' + Style.RESET_ALL)
             elif key == ord('C') or key == ord('c'):
                 if args.use_video_stream:
