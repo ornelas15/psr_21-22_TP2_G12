@@ -268,7 +268,7 @@ def main():
                            int(sqrt((pow(((x2 - x1) / 2), 2)) + pow(((y2 - y1) / 2), 2))), color, thickness)
 
         if args.coloring_image_mode:
-            copy = cv2.subtract(copy, cImage, dtype=cv2.CV_64F)
+            copy = cv2.subtract(copy.astype(np.uint8), cImage.astype(np.uint8))
 
         cv2.imshow(window1_name, copy)
 
@@ -345,12 +345,11 @@ def main():
                     for i in range(height):
                         for j in range(width):
                             rightColor = labelColors[labelMatrix[i, j]]
-                            if rightColor == (0, 0, 0):
-                                pass
-                            elif np.array_equal(painting[i, j], rightColor):
-                                hits += 1
-                            else:
-                                misses += 1
+                            if rightColor != (0, 0, 0):
+                                if np.array_equal(painting[i, j], rightColor):
+                                    hits += 1
+                                else:
+                                    misses += 1
 
                     print(hits)
                     print(hits / (hits + misses))
