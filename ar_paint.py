@@ -341,6 +341,7 @@ def main():
                     x1, y1, x2, y2 = 0, 0, 0, 0
                     print(Fore.MAGENTA + Style.BRIGHT + 'Rectangle Drawn' + Style.RESET_ALL)
             elif key == ord('Q') or key == ord('q') or key == 27:  # 27 -> ESC
+                print('\n' + Fore.RED + Style.BRIGHT + "Quitting" + Style.RESET_ALL)
                 if args.coloring_image_mode:
                     hits = 0
                     misses = 0
@@ -353,9 +354,7 @@ def main():
                                 else:
                                     misses += 1
 
-                    print(hits)
-                    print(hits / (hits + misses))
-                print('\n' + Fore.RED + Style.BRIGHT + "Quitting" + Style.RESET_ALL + '\n')
+                    print("PRECISION: " + str(round(hits / (hits + misses), 3)) +  Style.RESET_ALL)
                 break
 
     # -----------------------------------------------------
