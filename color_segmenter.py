@@ -56,7 +56,7 @@ def main():
     while True:
         # get an image from the camera
         _, image = capture.read()
-        image = cv2.flip(image, 1)  # Flip image
+        image = cv2.flip(image, 1)  # Flip image captured
 
         if image is None:
             print(Fore.CYAN + 'Video is over!' + Style.RESET_ALL)
