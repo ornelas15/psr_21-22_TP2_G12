@@ -275,8 +275,8 @@ def main():
         cv2.imshow(window1_name, copy)
 
         # Show smaller windows
-        cv2.resizeWindow(window1_name, (width // 3, height // 3))
-        cv2.resizeWindow(window2_name, (width // 3, height // 3))
+        cv2.resizeWindow(window1_name, (width // 2, height // 2))
+        cv2.resizeWindow(window2_name, (width // 2, height // 2))
         cv2.resizeWindow(window3_name, (width // 3, height // 3))
 
         # Deal with keyboard events
