@@ -121,9 +121,10 @@ def main():
     print(Fore.CYAN + "  Blue line color (press B)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Increase line thickness (press +)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Decrease line thickness (press -)" + Style.RESET_ALL)
-    print(Fore.CYAN + "  Image Capture (press E)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Image Capture (press W)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Clear Image (press C)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Draw Rectangle (press S)" + Style.RESET_ALL)
-    print(Fore.CYAN + "  Draw Circle (press C)" + Style.RESET_ALL)
+    print(Fore.CYAN + "  Draw Circle (press O)" + Style.RESET_ALL)
     print(Fore.CYAN + "  Terminate program (press Q)" + Style.RESET_ALL)
 
     # Setup video capture for webcam
