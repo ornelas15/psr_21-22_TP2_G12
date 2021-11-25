@@ -132,9 +132,15 @@ def main():
     _, image_capture = capture.read()
     height, width, _ = image_capture.shape
 
-    painting = np.ones((height, width, 3)) * 255
+    # painting = np.ones((height, width, 3)) * 255
 
-    cv2.imshow(window1_name, painting)
+    if args.use_video_stream:
+        painting = np.zeros((height, width, 3))
+        cv2.imshow(window1_name, image_capture)
+    else:
+        painting = np.ones((height, width, 3)) * 255
+        cv2.imshow(window1_name, painting)
+
     cv2.setMouseCallback(window1_name, mouse_paint)
 
     # Coloring image mode
@@ -175,6 +181,8 @@ def main():
 
         if args.coloring_image_mode:
             cv2.imshow(window1_name, cv2.subtract(painting, cImage, dtype=cv2.CV_64F))
+        elif args.use_video_stream:
+            cv2.imshow(window1_name, image_capture)
         else:
             cv2.imshow(window1_name, painting)
 
@@ -209,10 +217,10 @@ def main():
             image_capture[mask2] = (0, 255, 0)
 
             # Cross On Centroid
-            cv2.line(image_capture, (x, y), (x + 5, y), (0, 0, 0), 2, cv2.LINE_4)
-            cv2.line(image_capture, (x, y), (x - 5, y), (0, 0, 0), 2, cv2.LINE_4)
-            cv2.line(image_capture, (x, y), (x, y + 5), (0, 0, 0), 2, cv2.LINE_4)
-            cv2.line(image_capture, (x, y), (x, y - 5), (0, 0, 0), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x + 5, y), (0, 0, 255), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x - 5, y), (0, 0, 255), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x, y + 5), (0, 0, 255), 2, cv2.LINE_4)
+            cv2.line(image_capture, (x, y), (x, y - 5), (0, 0, 255), 2, cv2.LINE_4)
 
             # if mouse not pressed use centroid coordinates
             if not clicking:
@@ -240,6 +248,15 @@ def main():
         # make a copy of painting to join all "layers" of the image
         copy = painting.copy()
 
+        if args.use_video_stream:
+            # Draw in Video Capture Test
+            painting_mask = deepcopy(copy)
+            painting_mask = cv2.cvtColor(painting_mask.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+            _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
+            painting_mask = painting_mask.astype(bool)
+            image_capture[painting_mask] = (0, 0, 0)
+            copy = cv2.add(image_capture.astype(np.uint8), copy.astype(np.uint8))
+
         if drawing:
             y2 = y
             x2 = x
@@ -252,17 +269,6 @@ def main():
 
         if args.coloring_image_mode:
             copy = cv2.subtract(copy, cImage, dtype=cv2.CV_64F)
-
-        """
-        if args.use_video_stream:
-            # Draw in Video Capture Test
-            painting_mask = deepcopy(copy)
-            painting_mask = cv2.cvtColor(painting_mask.astype(np.uint8), cv2.COLOR_BGR2GRAY)
-            _, painting_mask = cv2.threshold(painting_mask, 0, 255, cv2.THRESH_BINARY)
-            painting_mask = painting_mask.astype(bool)
-            image_capture[painting_mask] = (0, 0, 0)
-            copy = cv2.add(image_capture, copy, dtype=cv2.CV_64F)
-        """
 
         cv2.imshow(window1_name, copy)
 
@@ -290,7 +296,10 @@ def main():
                 cv2.imwrite(name + '.jpg', painting)
                 print(Fore.WHITE + Style.BRIGHT + 'Image saved' + Style.RESET_ALL)
             elif key == ord('C') or key == ord('c'):
-                painting = np.ones((height, width, 3)) * 255
+                if args.use_video_stream:
+                    painting = np.zeros((height, width, 3))
+                else:
+                    painting = np.ones((height, width, 3)) * 255
                 print(Fore.WHITE + Style.BRIGHT + 'Image cleared' + Style.RESET_ALL)
             elif key == ord('+'):
                 if thickness < 20:
